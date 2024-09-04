@@ -4,52 +4,70 @@ import { pinata } from "@/utils/config";
 
 export const config = {
     api: {
-        bodyParser: false,
+        bodyParser: true,
     },
 };
 
 export async function POST(req: NextRequest) {
-    // Get the image URL from generated Galadriel URL
-    const imageUrl = req.body;
-    if (!imageUrl) {
-        return NexteResponse.json(
-            { error: "Image URL is required"},
+    const body = await req.json();
+    const imageUrl = body.imageUrl;
+    
+    if (!imageUrl || typeof imageUrl !== 'string') {
+        return NextResponse.json(
+            { error: "Valid image URL is required" },
             { status: 400 }
         );
-    }    
+    }
 
     try {
-
-        // Download image
-        const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer'});
-        const buffer = Buffer.from(imageResponse.data, 'binary');
-        
-        // Prepare form data for Pinata
-        const data = new formData();
-        data.set("file", buffer, {
-            filename: 'image.png',
-            contentType: 'image/png',
-        });
-        const file: File | null = data.get("file") as unknown as File;
-        // Upload image to Pinata
-        const uploadData = await pinata.upload.file(file);
+        const urlStream = await fetch(imageUrl);
+        const arrayBuffer = await urlStream.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const file = new File([blob], "file");
+        const data = new FormData();
+        data.append("file", file);
+        const uploadData = await fetch(
+            "https://api.pinata.cloud/pinning/pinFileToIPFS",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${process.env.PINATA_JWT}`,
+                },
+                body: data,
+            }
+        );
+        const uploadRes = await uploadData.json();
+        console.log(uploadRes);
+        const imgCid = uploadRes.IpfsHash;
         // Prepare OpenSea Metadata for Pinata
-        const metadata = {
-            name: "Dave Starbelly",
-            description: "Friendly OpenSea Creature that enjoys long swims in the ocean.",
-            image: `ipfs://${uploadData.cid}`,
-            attributes: [],
-        };
+        const metadata = JSON.stringify({
+            pinataContent: {
+                name: "Aetheral PFPAI",
+                description: "AI Generated Profile Picture in Galadriel Devnet",
+                image: `ipfs://${imgCid}`,
+                attributes: [],
+            },
+        });
         // Upload metadata to Pinata
-        const uploadMetadata = await pinata.upload.json(metadata);
-        const metadataCid = uploadMetadata.cid;
+        const metadataRes = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.PINATA_JWT}`,
+            },
+            body: metadata,
+        });
+        const metedataData = await metadataRes.json();
+        const metadataCid = metedataData.IpfsHash;
 
-        return NextResponse.json(metadataCid, { status: 200 });
+        const imgData = `https://ipfs.io/ipfs/${imgCid}`;
+
+        return NextResponse.json({metadataUrl: metadataCid, imageUrl: imgCid, imgData: imgData}, { status: 200 });
     } catch (error) {
-        console.error("Error uploading file:", error);
+        console.error("Error details:", error);
         return NextResponse.json(
-            { error: "Internal Server Error" }, 
-            { status: 500 }
+            { error: "Invalid URL or unable to download image" }, 
+            { status: 400 }
         );
     }
 }
