@@ -6,6 +6,7 @@ import { client } from "../client";
 import { defineChain, getContract, readContract, prepareContractCall, sendTransaction, waitForReceipt, getContractEvents } from "thirdweb";
 import { useActiveAccount } from "thirdweb/react";
 import { tokenOfOwnerByIndex } from "thirdweb/extensions/erc721";
+import { HypersyncClient, Decoder, presetQueryLogsOfEvent } from '@envio-dev/hypersync-client'
 
 export default function Home() {
   const [url, setUrl] = useState("");
@@ -219,6 +220,32 @@ export default function Home() {
     }
   };
 
+  const envioFeatured = async () => {
+    const client = HypersyncClient.new({
+      url: "https://696969.hypersync.xyz"
+    });
+
+    const aetherContract = "0x90D0cf5780F502B3DAc6C1e06Afc2D2575c77f5A";
+    const eventTopic = "0xd469a7325078a9e6013e0619cb6e9472faf345ebd8469fe6bf9fc7ee67008e03"
+
+    let query = presetQueryLogsOfEvent(aetherContract, eventTopic, 35_380_037);
+    console.log("Running query...");
+    const results = await client.get(query);
+
+    console.log("Query results: ");
+    console.log(results);
+
+    console.log(`Query returned ${results.data.logs.length} logs of events`); 
+    console.log("Query logs:");
+    console.log(results.data.logs);
+
+    const decoder = new Decoder();
+    const decodedLogs = decoder.decodeLogs(results.data.logs);
+    console.log("Decoded logs:");
+    console.log(decodedLogs);
+  }
+
+
   return (
     <main className="w-full min-h-screen m-auto flex flex-col justify-center items-center">
         <Navbar/>
@@ -236,6 +263,9 @@ export default function Home() {
       </button>
       <button onClick={getLeaderboard} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
         Get Leaderboard
+      </button>
+      <button onClick={envioFeatured} className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+        Envio Featured
       </button>
     </main>
   );

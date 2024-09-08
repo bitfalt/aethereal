@@ -120,10 +120,6 @@ const ProfilePage = () => {
   const openModal = (nft: NFT) => setSelectedNFT(nft);
   const closeModal = () => setSelectedNFT(null);
 
-  if (isLoading) {
-    return <div className="text-white">Loading...</div>;
-  }
-
   return (
     <div className={`${etna.className} bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] min-h-screen relative overflow-hidden`}>
       <div className="absolute inset-0 bg-[url('/stars.png')] opacity-70"></div>
