@@ -7,12 +7,12 @@ import localFont from 'next/font/local';
 import { useActiveAccount } from "thirdweb/react";
 import { client } from '@/app/client'
 import { defineChain, getContract, readContract } from "thirdweb";
+import { tokenOfOwnerByIndex } from "thirdweb/extensions/erc721";
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
 import NFTPreviewModal from '@/components/NFTPreviewModal';
 import EditProfileModal from '@/components/EditProfileModal'; 
 import { useEffect } from 'react';
-import getUserNFTs from '../nft/page';
 
 // Define the font
 const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
@@ -32,22 +32,17 @@ const aether = getContract({
   client
 })
 
-// Update mockNFTs to include description and artist
-const mockNFTs = [
-  { id: 1, name: 'NFT 1', image: 'https://storage.googleapis.com/galadriel-assets/81b58a37-a9a5-4e40-b87e-d15b13a6ddac.png', description: 'Description 1', artist: 'Artist 1' },
-  { id: 2, name: 'NFT 2', image: '/placeholder.jpg', description: 'Description 2', artist: 'Artist 2' },
-  { id: 3, name: 'NFT 3', image: '/placeholder.jpg', description: 'Description 3', artist: 'Artist 3' },
-];
 
-// Add this type definition near the top of your file, after the imports
+
+// Remove mockNFTs as we'll be using real data now
+
+// Update the NFT type to match our new structure
 type NFT = {
-  id: number; // Add this line
-  tokenId: number;
-  tokenUri: string;
-  name?: string;
-  image?: string;
-  description?: string;
-  artist?: string;
+  id: number;
+  name: string;
+  image: string;
+  description: string;
+  artist: string;
 };
 
 const ProfilePage = () => {
@@ -58,24 +53,60 @@ const ProfilePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [nfts, setNfts] = useState<NFT[]>([]);
 
+  const getUserNfts = async () => {
+    let indexedUserNfts = [];
+    for (let i = 0; i < 6; i++) {
+      try {
+        const token = await tokenOfOwnerByIndex({
+          contract: aether,
+          owner: account?.address,
+          index: i
+        });
+        console.log("Token:", token);
+        if (token !== undefined) {
+
+          const input = await readContract({
+            contract: aether,
+            method: "function mintInputs(uint256 tokenId) returns (address, string, bool)",
+            params: [token]
+          })
+
+          const creator = input[0];
+          const prompt = input[1];
+
+          const tokenUri = await readContract({
+            contract: aether,
+            method: "function tokenURI(uint256 tokenId) returns (string)",
+            params: [token]
+          });
+          if (tokenUri) {
+            indexedUserNfts.push({ creator: creator, prompt: prompt, tokenId: Number(token), tokenUri });
+          }
+        }
+      } catch (e) {
+        console.error(`Error fetching NFT at index ${i}:`, e);
+        break;
+      }
+    } 
+    console.log("Indexed user NFTs:");
+    console.log(indexedUserNfts);
+    return indexedUserNfts;
+  }
+
   useEffect(() => {
     const fetchNFTs = async () => {
       try {
-        const userNfts = await getUserNFTs();
-        if (Array.isArray(userNfts)) {
-          const processedNfts = await Promise.all(userNfts.map(async (nft: NFT) => {
-            const response = await fetch(nft.tokenUri);
-            const metadata = await response.json();
-            return {
-              ...nft,
-              id: nft.tokenId, // Add this line
-              name: metadata.name || `NFT ${nft.tokenId}`,
-              image: metadata.image || '/placeholder.jpg',
-              description: metadata.description || '',
-              artist: metadata.artist || 'Unknown',
-            };
+        const userNfts = await getUserNfts();
+        if (userNfts && userNfts.length > 0) {
+          const nftsData = userNfts.map((nft, index) => ({
+            id: index,
+            name: `Aether ${nft.tokenId}`,
+            image: nft.tokenUri,
+            description: `${nft.prompt}`,
+            artist: `AI used by ${nft.creator}`
           }));
-          setNfts(processedNfts);
+          setNfts(nftsData);
+          console.log("User NFTs:", nftsData);
         } else {
           console.error('getUserNFTs did not return an array');
           setNfts([]);

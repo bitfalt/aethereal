@@ -104,7 +104,6 @@ export default function CreatePage() {
 
 
   const mintNft = useCallback(async () => {
-    setIsLoading(true);
     try {
     const message = prompt + " with a " + style;
     const transaction = prepareContractCall({
@@ -132,10 +131,8 @@ export default function CreatePage() {
       console.log(tokenUri);
       const image = String(tokenUri);
       setGeneratedImage(image);
-      setIsLoading(false);
     } else {
       console.error("Failed to get NFT ID from receipt");
-      setIsLoading(false)
     }
   } catch (e) {
     console.error(e);
@@ -236,7 +233,16 @@ export default function CreatePage() {
                       className="rounded-lg object-cover"
                     />
                   ) : (
-                    <p className="text-indigo-300 text-2xl">Your image will appear here</p>
+                    <div className="text-center">
+                      {isLoading ? (
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+                          <p className="text-indigo-300 text-2xl">Generating NFT...</p>
+                        </div>
+                      ) : (
+                        <p className="text-indigo-300 text-2xl">Your image will appear here</p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

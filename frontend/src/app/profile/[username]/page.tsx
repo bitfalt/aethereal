@@ -8,6 +8,7 @@ import localFont from 'next/font/local';
 import { useActiveAccount } from "thirdweb/react";
 import { client } from '@/app/client'
 import { defineChain, getContract, readContract } from "thirdweb";
+import { tokenOfOwnerByIndex } from "thirdweb/extensions/erc721";
 import { Navbar } from '@/components/Navbar';
 import NFTPreviewModal from '@/components/NFTPreviewModal';
 import EditProfileModal from '@/components/EditProfileModal';
@@ -50,27 +51,62 @@ const ProfilePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const getUserNfts = async () => {
+    let indexedUserNfts = [];
+    for (let i = 0; i < 6; i++) {
+      try {
+        const token = await tokenOfOwnerByIndex({
+          contract: aether,
+          owner: username,
+          index: i
+        });
+        console.log("Token:", token);
+        if (token !== undefined) {
+
+          const input = await readContract({
+            contract: aether,
+            method: "function mintInputs(uint256 tokenId) returns (address, string, bool)",
+            params: [token]
+          })
+
+          const creator = input[0];
+          const prompt = input[1];
+
+          const tokenUri = await readContract({
+            contract: aether,
+            method: "function tokenURI(uint256 tokenId) returns (string)",
+            params: [token]
+          });
+          if (tokenUri) {
+            indexedUserNfts.push({ creator: creator, prompt: prompt, tokenId: Number(token), tokenUri });
+          }
+        }
+      } catch (e) {
+        console.error(`Error fetching NFT at index ${i}:`, e);
+        break;
+      }
+    } 
+    console.log("Indexed user NFTs:");
+    console.log(indexedUserNfts);
+    return indexedUserNfts;
+  }
+
+
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
       try {
-        // Here you would typically fetch user data from your backend or smart contract
-        // For now, we'll use mock data
-        const mockUser = {
-          name: username,
-          avatar: '/avatar.jpg',
-          bio: `NFT enthusiast and digital art collector - ${username}`,
-        };
-        setUser(mockUser);
-
-        // Fetch NFTs owned by the user
-        // This is a placeholder - replace with actual contract call
-        const mockNFTs = [
-          { id: 1, name: 'NFT 1', image: 'https://storage.googleapis.com/galadriel-assets/81b58a37-a9a5-4e40-b87e-d15b13a6ddac.png', description: 'Description 1', artist: 'Artist 1' },
-          { id: 2, name: 'NFT 2', image: '/placeholder.jpg', description: 'Description 2', artist: 'Artist 2' },
-          { id: 3, name: 'NFT 3', image: '/placeholder.jpg', description: 'Description 3', artist: 'Artist 3' },
-        ];
-        setNfts(mockNFTs);
+        const userNfts = await getUserNfts();
+        if (userNfts && userNfts.length > 0) {
+          const nftsData = userNfts.map((nft, index) => ({
+            id: index,
+            name: `Aether ${nft.tokenId}`,
+            image: nft.tokenUri,
+            description: `${nft.prompt}`,
+            artist: `AI used by ${nft.creator}`
+          }));
+          setNfts(nftsData);
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
       } finally {
@@ -83,20 +119,9 @@ const ProfilePage = () => {
 
   const openModal = (nft: NFT) => setSelectedNFT(nft);
   const closeModal = () => setSelectedNFT(null);
-  const openEditModal = () => setIsEditModalOpen(true);
-  const closeEditModal = () => setIsEditModalOpen(false);
-
-  const updateUserProfile = (updatedUser: User) => {
-    setUser(updatedUser);
-    closeEditModal();
-  };
 
   if (isLoading) {
     return <div className="text-white">Loading...</div>;
-  }
-
-  if (!user) {
-    return <div className="text-white">User not found</div>;
   }
 
   return (
@@ -111,7 +136,7 @@ const ProfilePage = () => {
               <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 mb-6 md:mb-0">
                 <div className="relative">
                   <Image 
-                    src={user.avatar} 
+                    src={'/avatar.jpg'} 
                     alt="Profile Avatar" 
                     width={150} 
                     height={150} 
@@ -119,20 +144,10 @@ const ProfilePage = () => {
                   />
                 </div>
                 <div className="text-center md:text-left">
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{user.name}</h1>
+                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{username}</h1>
                   <div className="w-24 h-px bg-indigo-400 mx-auto md:mx-0 mb-4"></div>
-                  <p className="text-lg text-indigo-100 max-w-md">{user.bio}</p>
+                  <p className="text-lg text-indigo-100 max-w-md">{'NFT enthusiast and digital art collector'}</p>
                 </div>
-              </div>
-              <div className="flex flex-col items-end space-y-4">
-                {address === user.name && (
-                  <button
-                    onClick={openEditModal}
-                    className="px-6 py-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors duration-300 shadow-md hover:shadow-lg"
-                  >
-                    Edit Profile
-                  </button>
-                )}
               </div>
             </div>
           </section>
@@ -152,7 +167,7 @@ const ProfilePage = () => {
                   <p className="text-center font-medium py-3 bg-indigo-800/50 text-indigo-100">{nft.name}</p>
                 </div>
               ))}
-              {address === user.name && (
+              {address === username && (
                 <Link href="/create" className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105 group shadow-md">
                   <div className="aspect-square flex items-center justify-center">
                     <div className="text-6xl text-white group-hover:scale-110 transition-transform duration-300">+</div>
@@ -167,9 +182,7 @@ const ProfilePage = () => {
       {selectedNFT && (
         <NFTPreviewModal nft={selectedNFT} onClose={closeModal} />
       )}
-      {isEditModalOpen && (
-        <EditProfileModal user={user} onClose={closeEditModal} onSave={updateUserProfile} />
-      )}
+
     </div>
   );
 };
