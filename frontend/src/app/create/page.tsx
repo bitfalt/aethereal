@@ -4,6 +4,9 @@ import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import localFont from 'next/font/local';
 import { Navbar } from '@/components/Navbar'; 
+import { client } from '@/app/client'
+import { defineChain, getContract, readContract, prepareContractCall, sendTransaction, waitForReceipt, getContractEvents } from "thirdweb";
+import { useActiveAccount } from "thirdweb/react";
 
 // Define the font
 const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
@@ -12,8 +15,133 @@ export default function CreatePage() {
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
   const [generatedImage, setGeneratedImage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const styles = ['realistic', 'cartoon', 'anime', 'game'];
+
+  const galadrielDevnet = defineChain(696969);
+  const leaderboard = getContract({
+    address: "0xE898120e6131a07ae0bFF9F82e43aEB6969F346A",
+    chain: galadrielDevnet,
+    client
+  })
+  const aether = getContract({
+    address: "0x90D0cf5780F502B3DAc6C1e06Afc2D2575c77f5A",
+    chain: galadrielDevnet,
+    client
+  })
+  const account = useActiveAccount();
+
+  // Web3 Functions
+  const updateLeaderboard = async () => {
+    const oldScore = await readContract({
+      contract: leaderboard,
+      method: "function getUserScore(address userAddress) returns (uint256)",
+      params: [account?.address]
+    });
+    const scoreInt = parseInt(oldScore);
+    const score = scoreInt + 1;
+    const transaction = prepareContractCall({
+      contract: leaderboard,
+      method: "function updateUserScore(address userAddress, uint256 score)",
+      params: [account?.address, score]
+    });
+    const { transactionHash } = await sendTransaction({ account, transaction });
+    console.log("Sent transaction");
+    console.log("Transaction hash: ", transactionHash);
+    const receipt = await waitForReceipt({
+      client,
+      chain: galadrielDevnet,
+      transactionHash
+    });
+    console.log("Receipt: ", receipt);
+  };
+
+  const getNftId = async (receipt: any): Promise<number | undefined> => {
+    let nftId;
+    if (receipt) {
+      try {
+        const eventsPromise = getContractEvents({
+          contract: aether,
+          fromBlock: receipt.blockNumber,
+          toBlock: receipt.blockNumber,
+          eventName: "MintInputCreated"
+        });
+        
+        const events = await eventsPromise;
+        console.log("Events: ");
+        console.log(events);
+        
+        if (events && events.length > 0) {
+          nftId = Number(events[0].args.chatId);
+        }
+      } catch (error) {
+        console.error("Error getting NFT ID:", error);
+      }
+    }
+    return nftId;
+  };
+
+  const pollTokenUri = async (tokenId: number): Promise<string | undefined> => {
+    // Wait for 20 seconds before starting the polling
+    await new Promise(resolve => setTimeout(resolve, 20000));
+
+    while (true) {
+        const tokenUri = await readContract({
+          contract: aether,
+          method: "function tokenURI(uint256 tokenId) returns (string)",
+          params: [tokenId]
+        });
+        if (tokenUri) {
+          return tokenUri;
+        }
+
+      // Wait for 1 second before trying again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  };
+
+
+  const mintNft = useCallback(async () => {
+    setIsLoading(true);
+    try {
+    const message = prompt + " with a " + style;
+    const transaction = prepareContractCall({
+      contract: aether,
+      method: "function initializeMint(string memory message)",
+      params: [message]
+    });
+    const { transactionHash} = await sendTransaction({account, transaction});
+    console.log("Sent transaction");
+    console.log("Transaction hash: ");
+    console.log(transactionHash);
+    const receipt = await waitForReceipt({
+      client,
+      chain: galadrielDevnet,
+      transactionHash
+    });
+    console.log("Receipt: ");
+    console.log(receipt);
+
+    const nftId = await getNftId(receipt);
+    if (nftId !== undefined) {
+      console.log("NFT ID:", nftId);
+      const tokenUri = await pollTokenUri(nftId);
+      console.log("Token URI: ");
+      console.log(tokenUri);
+      const image = String(tokenUri);
+      setGeneratedImage(image);
+      setIsLoading(false);
+    } else {
+      console.error("Failed to get NFT ID from receipt");
+      setIsLoading(false)
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  }, [account, client, galadrielDevnet]
+);
 
   const handlePromptChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
@@ -22,14 +150,25 @@ export default function CreatePage() {
     }
   }, []);
 
-  const handleGenerate = async () => {
-    // TODO: Implement API call to generate image
-    setGeneratedImage('/placeholder.jpg');
-  };
 
-  const handleMint = () => {
-    // TODO: Implement minting functionality
-    console.log('Minting image...');
+
+  const handleGenerateAndMint = async () => {
+    if (!prompt || !style) {
+      setError('Please provide both a prompt and a style.');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+
+    try {
+      mintNft();
+      //updateLeaderboard();
+      // You might want to show a success message or redirect the user here
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -76,20 +215,14 @@ export default function CreatePage() {
                 </div>
                 
                 <button
-                  onClick={handleGenerate}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-5 px-8 rounded-lg w-full text-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  onClick={handleGenerateAndMint}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-5 px-8 rounded-lg w-full text-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Generate Image
+                  {isLoading ? 'Generating & Minting...' : 'Generate & Mint NFT'}
                 </button>
 
-                {generatedImage && (
-                  <button
-                    onClick={handleMint}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-5 px-8 rounded-lg w-full text-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl"
-                  >
-                    Mint
-                  </button>
-                )}
+                {error && <p className="text-red-500 mt-2">{error}</p>}
               </div>
               
               <div className="w-full lg:w-1/2">

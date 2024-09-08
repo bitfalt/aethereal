@@ -1,9 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaTrophy, FaMedal } from 'react-icons/fa';
 import Link from 'next/link';
 import localFont from 'next/font/local';
+import { client } from '@/app/client';
+import { defineChain, getContract, readContract } from 'thirdweb';
 import { Navbar } from '@/components/Navbar'; 
 import Avatar from '../../components/Avatar';
 
@@ -14,18 +16,47 @@ interface LeaderboardEntry {
   avatarUrl?: string;
 }
 
-const leaderboardData: LeaderboardEntry[] = [
-  { rank: 1, username: "John Doe", nftsMinted: 50, avatarUrl: "" },
-  { rank: 2, username: "Jane Smith", nftsMinted: 23, avatarUrl: "" },
-  { rank: 3, username: "Bob Johnson", nftsMinted: 21, avatarUrl: "" },
-  { rank: 4, username: "Alice Brown", nftsMinted: 18, avatarUrl: "" },
-  { rank: 5, username: "Charlie Green", nftsMinted: 15, avatarUrl: "" },
-  // Add more entries as needed
-];
-
 const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
 
 const LeaderboardPage: React.FC = () => {
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const galadrielDevnet = defineChain(696969);
+        const leaderboard = getContract({
+          address: "0xbbA6B081A01A587574Aea611dFD6e11442e25fa1",
+          chain: galadrielDevnet,
+          client
+        });
+
+        const data: LeaderboardEntry[] = [];
+        for (let i = 0; i < 5; i++) {
+          const user = await readContract({
+            contract: leaderboard,
+            method: "function getUserByIndex(uint8 index) returns (address, uint256)",
+            params: [i]
+          });
+          data.push({
+            rank: i + 1,
+            username: user[0],
+            nftsMinted: Number(user[1]),
+            avatarUrl: ""
+          });
+        }
+        setLeaderboardData(data);
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
   return (
     <div className={`${etna.className} min-h-screen bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] flex flex-col`}>
       <div className="absolute inset-0 bg-[url('/stars.png')] opacity-70"></div>
@@ -48,25 +79,29 @@ const LeaderboardPage: React.FC = () => {
             <div className="text-right">NFTs Minted</div>
           </div>
 
-          <div className="space-y-4">
-            {leaderboardData.map((entry) => (
-              <Link href={`/profile/${entry.username}`} key={entry.rank}>
-                <div className="grid grid-cols-4 gap-4 items-center bg-indigo-800/30 p-5 rounded-lg transition-all hover:bg-indigo-700/40 hover:shadow-lg hover:scale-105 cursor-pointer">
-                  <div className="flex items-center justify-center w-8 h-8">
-                    {entry.rank === 1 && <FaTrophy size={24} color="#FBBF24" />}
-                    {entry.rank === 2 && <FaMedal size={24} color="#D1D5DB" />}
-                    {entry.rank === 3 && <FaMedal size={24} color="#FB923C" />}
-                    {entry.rank > 3 && <span className="text-xl font-semibold text-indigo-200">{entry.rank}</span>}
+          {isLoading ? (
+            <div className="text-center text-indigo-300">Loading leaderboard...</div>
+          ) : (
+            <div className="space-y-4">
+              {leaderboardData.map((entry) => (
+                <Link href={`/profile/${entry.username}`} key={entry.rank}>
+                  <div className="grid grid-cols-4 gap-4 items-center bg-indigo-800/30 p-5 rounded-lg transition-all hover:bg-indigo-700/40 hover:shadow-lg hover:scale-105 cursor-pointer">
+                    <div className="flex items-center justify-center w-8 h-8">
+                      {entry.rank === 1 && <FaTrophy size={24} color="#FBBF24" />}
+                      {entry.rank === 2 && <FaMedal size={24} color="#D1D5DB" />}
+                      {entry.rank === 3 && <FaMedal size={24} color="#FB923C" />}
+                      {entry.rank > 3 && <span className="text-xl font-semibold text-indigo-200">{entry.rank}</span>}
+                    </div>
+                    <div className="col-span-2 flex items-center">
+                      <Avatar user={entry} />
+                      <span className="font-semibold text-indigo-100 text-lg">{entry.username}</span>
+                    </div>
+                    <div className="text-right font-bold text-blue-400 text-lg">{entry.nftsMinted}</div>
                   </div>
-                  <div className="col-span-2 flex items-center">
-                    <Avatar user={entry} />
-                    <span className="font-semibold text-indigo-100 text-lg">{entry.username}</span>
-                  </div>
-                  <div className="text-right font-bold text-blue-400 text-lg">{entry.nftsMinted}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Real-time update indicator */}
           <div className="mt-10 text-center text-sm text-indigo-300 flex items-center justify-center">

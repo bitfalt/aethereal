@@ -15,6 +15,10 @@ contract Leaderboard {
         uint256 score;
     }
 
+    function getUserByIndex(uint8 index) public view returns (address, uint256) {
+        return (leaderboard[index].userAddress, leaderboard[index].score);
+    }
+
     // call to update leaderboard with user address and score (called by Aether contract)
     function updateUserScore(address userAddress, uint256 score) public {
         // Check if the user is already in the leaderboard
