@@ -33,6 +33,7 @@ Aethereal is a platform that allows users to create unique NFT art using AI. Use
 
 2. Install dependencies:
    ```
+   cd frontend
    pnpm install
    ```
 
