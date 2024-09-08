@@ -218,13 +218,6 @@ export default function Home() {
         onChange={(e) => setUrl(e.target.value)}
         placeholder="Enter image URL"
       />
-      <button disabled={uploading} onClick={uploadFile}>
-        {uploading ? "Uploading..." : "Upload"}
-      </button>
-      {imgData && <img src={imgData} alt="Uploaded image" className="mt-4 max-w-md" />}
-      <button onClick={deployContract} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-        Deploy Contract
-      </button>
       <button onClick={mintNft} className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
         Mint NFT
       </button>

@@ -7,6 +7,9 @@ import Link from 'next/link';
 import avatarImage from '/public/avatar.jpg';
 import localFont from 'next/font/local';
 import { useActiveAccount } from "thirdweb/react";
+import { client } from '@/app/client'
+import { defineChain, getContract, readContract } from "thirdweb";
+import { tokenOfOwnerByIndex } from "thirdweb/extensions/erc721";
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
 import NFTPreviewModal from '@/components/NFTPreviewModal';
@@ -22,9 +25,17 @@ const mockUser = {
   bio: 'NFT enthusiast and digital art collector',
 };
 
+// Define chain and smart contract
+const galadrielDevnet = defineChain(696969);
+const aether = getContract({
+  address: "0x90D0cf5780F502B3DAc6C1e06Afc2D2575c77f5A",
+  chain: galadrielDevnet,
+  client
+})
+
 // Update mockNFTs to include description and artist
 const mockNFTs = [
-  { id: 1, name: 'NFT 1', image: '/placeholder.jpg', description: 'Description 1', artist: 'Artist 1' },
+  { id: 1, name: 'NFT 1', image: 'https://storage.googleapis.com/galadriel-assets/81b58a37-a9a5-4e40-b87e-d15b13a6ddac.png', description: 'Description 1', artist: 'Artist 1' },
   { id: 2, name: 'NFT 2', image: '/placeholder.jpg', description: 'Description 2', artist: 'Artist 2' },
   { id: 3, name: 'NFT 3', image: '/placeholder.jpg', description: 'Description 3', artist: 'Artist 3' },
 ];
