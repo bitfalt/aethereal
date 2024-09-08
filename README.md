@@ -1,5 +1,3 @@
-Here's a README file for the project:
-
 # Aethereal - AI-Generated NFT Platform
 
 Aethereal is a platform that allows users to create unique NFT art using AI. Users can input their preferences, generate art, and mint it as an NFT on the Galadriel blockchain. The platform also features a leaderboard to track top creators and a featured NFTs section to showcase the best art.
