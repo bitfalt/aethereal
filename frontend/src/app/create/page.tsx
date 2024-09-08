@@ -23,7 +23,7 @@ export default function CreatePage() {
 
   const galadrielDevnet = defineChain(696969);
   const leaderboard = getContract({
-    address: "0xE898120e6131a07ae0bFF9F82e43aEB6969F346A",
+    address: "0xbbA6B081A01A587574Aea611dFD6e11442e25fa1",
     chain: galadrielDevnet,
     client
   })
@@ -108,7 +108,7 @@ export default function CreatePage() {
     setIsLoading(true);
     setIsGenerating(true);
     try {
-    const message = prompt + " with a " + style;
+    const message = "Create an image of " + prompt + " with a " + style + " style";
     const transaction = prepareContractCall({
       contract: aether,
       method: "function initializeMint(string memory message)",
