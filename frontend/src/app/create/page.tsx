@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import localFont from 'next/font/local';
 import { Navbar } from '@/components/Navbar'; 
@@ -17,6 +17,7 @@ export default function CreatePage() {
   const [generatedImage, setGeneratedImage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const styles = ['realistic', 'cartoon', 'anime', 'game'];
 
@@ -104,6 +105,8 @@ export default function CreatePage() {
 
 
   const mintNft = useCallback(async () => {
+    setIsLoading(true);
+    setIsGenerating(true);
     try {
     const message = prompt + " with a " + style;
     const transaction = prepareContractCall({
@@ -136,6 +139,9 @@ export default function CreatePage() {
     }
   } catch (e) {
     console.error(e);
+  } finally {
+    setIsGenerating(false);
+    setIsLoading(false);
   }
   }, [account, client, galadrielDevnet]
 );
@@ -155,101 +161,117 @@ export default function CreatePage() {
       return;
     }
     setIsLoading(true);
+    setIsGenerating(true);
     setError('');
 
     try {
-      mintNft();
+      await mintNft();
       //updateLeaderboard();
       // You might want to show a success message or redirect the user here
     } catch (err) {
       console.error(err);
+      setError('An error occurred while generating and minting.');
     } finally {
       setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
   return (
-    <div className={`${etna.className} bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] min-h-screen relative overflow-hidden`}>
-      <div className="absolute inset-0 bg-[url('/stars.png')] opacity-70"></div>
-      <div className="relative z-10">
-        <Navbar /> 
-        <div className="container mx-auto px-4 py-12 min-h-[calc(100vh-64px)] flex items-center justify-center">
-          <div className="bg-indigo-900/50 backdrop-blur-sm p-10 rounded-xl border border-indigo-700 w-full max-w-6xl">
-            <div className="flex flex-col lg:flex-row gap-12">
-              <div className="w-full lg:w-1/2 space-y-8">
-                <div>
-                  <h2 className="text-3xl font-semibold mb-4 text-white">Idea</h2>
-                  <input
-                    type="text"
-                    value={prompt}
-                    onChange={handlePromptChange}
-                    placeholder="Make a magical and wise wizard frog"
-                    className="w-full p-4 text-lg bg-indigo-800/50 border border-indigo-600 rounded-lg text-white placeholder-indigo-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition"
-                    maxLength={50}
-                  />
-                  <p className="text-sm text-indigo-300 mt-2">
-                    {prompt.length}/50 characters
-                  </p>
-                </div>
-                
-                <div>
-                  <h2 className="text-3xl font-semibold mb-4 text-white">Style</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {styles.map((styleOption) => (
-                      <button
-                        key={styleOption}
-                        onClick={() => setStyle(styleOption)}
-                        className={`px-6 py-4 text-xl font-semibold rounded-lg transition-all ${
-                          style === styleOption
-                            ? 'bg-blue-500 text-white shadow-md'
-                            : 'bg-indigo-800/50 text-indigo-200 hover:bg-indigo-700/50 hover:shadow'
-                        }`}
-                      >
-                        {styleOption.charAt(0).toUpperCase() + styleOption.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <button
-                  onClick={handleGenerateAndMint}
-                  disabled={isLoading}
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-5 px-8 rounded-lg w-full text-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? 'Generating & Minting...' : 'Generate & Mint NFT'}
-                </button>
-
-                {error && <p className="text-red-500 mt-2">{error}</p>}
-              </div>
-              
-              <div className="w-full lg:w-1/2">
-                <div className="border-4 border-indigo-600 rounded-lg aspect-square flex items-center justify-center bg-indigo-800/30 overflow-hidden">
-                  {generatedImage ? (
-                    <Image
-                      src={generatedImage}
-                      alt="Generated Image"
-                      width={600}
-                      height={600}
-                      className="rounded-lg object-cover"
+    <>
+      <div className={`${etna.className} bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] min-h-screen relative overflow-hidden`}>
+        <div className="absolute inset-0 bg-[url('/stars.png')] opacity-70"></div>
+        <div className="relative z-10">
+          <Navbar /> 
+          <div className="container mx-auto px-4 py-12 min-h-[calc(100vh-64px)] flex items-center justify-center">
+            <div className="bg-indigo-900/50 backdrop-blur-sm p-10 rounded-xl border border-indigo-700 w-full max-w-6xl">
+              <div className="flex flex-col lg:flex-row gap-12">
+                <div className="w-full lg:w-1/2 space-y-8">
+                  <div>
+                    <h2 className="text-3xl font-semibold mb-4 text-white">Idea</h2>
+                    <input
+                      type="text"
+                      value={prompt}
+                      onChange={handlePromptChange}
+                      placeholder="Make a magical and wise wizard frog"
+                      className="w-full p-4 text-lg bg-indigo-800/50 border border-indigo-600 rounded-lg text-white placeholder-indigo-300 focus:border-blue-500 focus:ring focus:ring-blue-200 transition"
+                      maxLength={50}
                     />
-                  ) : (
-                    <div className="text-center">
-                      {isLoading ? (
-                        <div className="flex flex-col items-center">
-                          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-                          <p className="text-indigo-300 text-2xl">Generating NFT...</p>
-                        </div>
-                      ) : (
-                        <p className="text-indigo-300 text-2xl">Your image will appear here</p>
-                      )}
+                    <p className="text-sm text-indigo-300 mt-2">
+                      {prompt.length}/50 characters
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h2 className="text-3xl font-semibold mb-4 text-white">Style</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      {styles.map((styleOption) => (
+                        <button
+                          key={styleOption}
+                          onClick={() => setStyle(styleOption)}
+                          className={`px-6 py-4 text-xl font-semibold rounded-lg transition-all ${
+                            style === styleOption
+                              ? 'bg-blue-500 text-white shadow-md'
+                              : 'bg-indigo-800/50 text-indigo-200 hover:bg-indigo-700/50 hover:shadow'
+                          }`}
+                        >
+                          {styleOption.charAt(0).toUpperCase() + styleOption.slice(1)}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  </div>
+                  
+                  <button
+                    onClick={handleGenerateAndMint}
+                    disabled={isLoading}
+                    className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-5 px-8 rounded-lg w-full text-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? 'Generating & Minting...' : 'Generate & Mint NFT'}
+                  </button>
+
+                  {error && <p className="text-red-500 mt-2">{error}</p>}
+                </div>
+                
+                <div className="w-full lg:w-1/2">
+                  <div className="border-4 border-indigo-600 rounded-lg aspect-square flex items-center justify-center bg-indigo-800/30 overflow-hidden">
+                    {generatedImage ? (
+                      <Image
+                        src={generatedImage}
+                        alt="Generated Image"
+                        width={600}
+                        height={600}
+                        className="rounded-lg object-cover"
+                      />
+                    ) : isGenerating ? (
+                      <div className="loader"></div>
+                    ) : (
+                      <p className="text-indigo-300 text-2xl">Your image will appear here</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <LoadingSpinnerStyles />
+    </>
   );
 }
+
+const LoadingSpinnerStyles = () => (
+  <style jsx global>{`
+    .loader {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3498db;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `}</style>
+);
