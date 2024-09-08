@@ -161,7 +161,7 @@ export default function Home() {
 
   const getUserNfts = async () => {
     let indexedUserNfts = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       try {
 
         const token = await tokenOfOwnerByIndex({

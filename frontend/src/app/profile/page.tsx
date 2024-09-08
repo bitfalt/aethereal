@@ -1,19 +1,18 @@
 'use client';
 
 import React from 'react';
-import { ThirdwebProvider } from "thirdweb/react";
 import Image from 'next/image';
 import Link from 'next/link';
-import avatarImage from '/public/avatar.jpg';
 import localFont from 'next/font/local';
 import { useActiveAccount } from "thirdweb/react";
 import { client } from '@/app/client'
 import { defineChain, getContract, readContract } from "thirdweb";
-import { tokenOfOwnerByIndex } from "thirdweb/extensions/erc721";
 import { Navbar } from '@/components/Navbar';
 import { useState } from 'react';
 import NFTPreviewModal from '@/components/NFTPreviewModal';
 import EditProfileModal from '@/components/EditProfileModal'; 
+import { useEffect } from 'react';
+import getUserNFTs from '../nft/page';
 
 // Define the font
 const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
@@ -42,11 +41,13 @@ const mockNFTs = [
 
 // Add this type definition near the top of your file, after the imports
 type NFT = {
-  id: number;
-  name: string;
-  image: string;
-  description: string;
-  artist: string;
+  id: number; // Add this line
+  tokenId: number;
+  tokenUri: string;
+  name?: string;
+  image?: string;
+  description?: string;
+  artist?: string;
 };
 
 const ProfilePage = () => {
@@ -55,6 +56,38 @@ const ProfilePage = () => {
   const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
   const [user, setUser] = useState(mockUser);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [nfts, setNfts] = useState<NFT[]>([]);
+
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      try {
+        const userNfts = await getUserNFTs();
+        if (Array.isArray(userNfts)) {
+          const processedNfts = await Promise.all(userNfts.map(async (nft: NFT) => {
+            const response = await fetch(nft.tokenUri);
+            const metadata = await response.json();
+            return {
+              ...nft,
+              id: nft.tokenId, // Add this line
+              name: metadata.name || `NFT ${nft.tokenId}`,
+              image: metadata.image || '/placeholder.jpg',
+              description: metadata.description || '',
+              artist: metadata.artist || 'Unknown',
+            };
+          }));
+          setNfts(processedNfts);
+        } else {
+          console.error('getUserNFTs did not return an array');
+          setNfts([]);
+        }
+      } catch (error) {
+        console.error('Error fetching NFTs:', error);
+        setNfts([]);
+      }
+    };
+
+    fetchNFTs();
+  }, []);
 
   const openModal = (nft: NFT) => {
     setSelectedNFT(nft);
@@ -122,16 +155,16 @@ const ProfilePage = () => {
           <section className="mb-12">
             <h2 className="text-3xl font-semibold mb-6 text-white">Your Generated NFTs</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {mockNFTs.map((nft) => (
+              {nfts.map((nft) => (
                 <div 
-                  key={nft.id} 
+                  key={nft.tokenId} 
                   className="bg-indigo-900/50 backdrop-blur-sm border border-indigo-700 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105 shadow-md cursor-pointer"
                   onClick={() => openModal(nft)}
                 >
                   <div className="aspect-square">
-                    <Image src={nft.image} alt={nft.name} width={300} height={300} className="w-full h-full object-cover" />
+                    <Image src={nft.image ?? '/placeholder.jpg'} alt={nft.name ?? 'NFT'} width={300} height={300} className="w-full h-full object-cover" />
                   </div>
-                  <p className="text-center font-medium py-3 bg-indigo-800/50 text-indigo-100">{nft.name}</p>
+                  <p className="text-center font-medium py-3 bg-indigo-800/50 text-indigo-100">{nft.name ?? `NFT ${nft.tokenId}`}</p>
                 </div>
               ))}
               <Link href="/create" className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105 group shadow-md">
@@ -145,7 +178,16 @@ const ProfilePage = () => {
         </div>
       </div>
       {selectedNFT && (
-        <NFTPreviewModal nft={selectedNFT} onClose={closeModal} />
+        <NFTPreviewModal 
+          nft={{
+            id: selectedNFT.id,
+            name: selectedNFT.name ?? `NFT ${selectedNFT.tokenId}`,
+            image: selectedNFT.image ?? '/placeholder.jpg',
+            description: selectedNFT.description ?? '',
+            artist: selectedNFT.artist ?? 'Unknown'
+          }} 
+          onClose={closeModal} 
+        />
       )}
       {isEditModalOpen && (
         <EditProfileModal user={user} onClose={closeEditModal} onSave={updateUserProfile} />
