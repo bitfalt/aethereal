@@ -16,7 +16,7 @@ export default function Home() {
   const galadrielDevnet = defineChain(696969);
   const account = useActiveAccount();
   const leaderboard = getContract({
-    address: "0xE898120e6131a07ae0bFF9F82e43aEB6969F346A",
+    address: "0xbbA6B081A01A587574Aea611dFD6e11442e25fa1",
     chain: galadrielDevnet,
     client
   })
@@ -26,6 +26,16 @@ export default function Home() {
     client
   })
 
+  const getLeaderboard = async () => {
+    for (let i = 0; i < 5; i++) {
+      const user = await readContract({
+        contract: leaderboard,
+        method: "function getUserByIndex(uint8 index) returns (address, uint256)",
+        params: [i]
+      });
+      console.log("User: ", user);
+    }
+  }
 
   const updateLeaderboard = async () => {
     const oldScore = await readContract({
@@ -223,6 +233,9 @@ export default function Home() {
       </button>
       <button onClick={getUserNfts} className="mt-4 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
         Get User NFTs
+      </button>
+      <button onClick={getLeaderboard} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        Get Leaderboard
       </button>
     </main>
   );
