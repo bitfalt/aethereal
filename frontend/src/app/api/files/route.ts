@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         const arrayBuffer = await urlStream.arrayBuffer();
         const blob = new Blob([arrayBuffer]);
         const file = new File([blob], "file");
-        const data = new FormData();
+        const data = new FormData(); 
         data.append("file", file);
         const uploadData = await fetch(
             "https://api.pinata.cloud/pinning/pinFileToIPFS",

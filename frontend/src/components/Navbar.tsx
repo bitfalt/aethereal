@@ -39,10 +39,7 @@ export function Navbar() {
           <ConnectButton
             client={client}
             connectButton={{label: "Connect"}}
-            accountAbstraction={{
-              chain: galadrielDevnet,
-              sponsorGas: false,
-            }}
+            chain={galadrielDevnet}
             appMetadata={{
               name: "Aethereal",
               url: "https://example.com",

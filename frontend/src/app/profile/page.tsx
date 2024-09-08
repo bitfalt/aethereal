@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { ThirdwebProvider } from "@thirdweb-dev/react";
+import { ThirdwebProvider } from "thirdweb/react";
 import Image from 'next/image';
 import Link from 'next/link';
 import avatarImage from '/public/avatar.jpg';
 import localFont from 'next/font/local';
-import { useAddress } from "@thirdweb-dev/react";
+import { useActiveAccount } from "thirdweb/react";
 import { Navbar } from '@/components/Navbar'; 
 
 // Define the font
@@ -28,7 +28,8 @@ const mockNFTs = [
 ];
 
 const ProfilePage = () => {
-  const address = useAddress();
+  const account = useActiveAccount();
+  const address = account?.address;
 
   return (
     <div className={`${etna.className} bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] min-h-screen relative overflow-hidden`}>
@@ -96,4 +97,4 @@ const WrappedProfilePage = () => {
   );
 };
 
-export default WrappedProfilePage;
+export default ProfilePage;

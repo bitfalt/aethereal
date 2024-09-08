@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { FaTrophy, FaMedal } from 'react-icons/fa6';
+import { FaTrophy, FaMedal } from 'react-icons/fa';
 import Link from 'next/link';
 import localFont from 'next/font/local';
 import { Navbar } from '@/components/Navbar'; 
