@@ -28,12 +28,20 @@ export function Navbar() {
             />
             <span className="text-xl md:text-4xl font-bold text-zinc-100 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Aethereal</span>
           </div>
-          <button
-            onClick={() => router.push('/leaderboard')}
-            className="text-white hover:text-indigo-300 transition duration-300 ease-in-out self-end mb-1 text-lg opacity-80 ml-8"
-          >
-            Leaderboard
-          </button>
+          <div className="flex space-x-4 ml-8 items-end">
+            <button
+              onClick={() => router.push('/leaderboard')}
+              className="text-white hover:text-indigo-300 transition duration-300 ease-in-out text-lg opacity-80 pt-4"
+            >
+              Leaderboard
+            </button>
+            <button
+              onClick={() => router.push('/featured')}
+              className="text-white hover:text-indigo-300 transition duration-300 ease-in-out text-lg opacity-80 pt-4"
+            >
+              Featured NFTs
+            </button>
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <ConnectButton
