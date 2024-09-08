@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "ethers": "^6.13.2",
+    "ethers6": "link:thirdweb/adapters/ethers6",
     "next": "14.1.0",
     "pinata": "^1.0.5",
     "react": "^18.3",

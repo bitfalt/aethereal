@@ -6,7 +6,6 @@ pragma solidity ^0.8.20;
 import {ERC721URIStorage, ERC721} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IOracle} from "./interfaces/IOracle.sol";
-import {ILeaderboard} from "./interfaces/ILeaderboard.sol";
 // @title Aether
 // @notice This contract integrates with teeML oracle to generate and mint NFTs based on user inputs.
 contract Aether is ERC721, ERC721Enumerable, ERC721URIStorage {
@@ -29,9 +28,6 @@ contract Aether is ERC721, ERC721Enumerable, ERC721URIStorage {
 
     // @notice Address of the oracle contract
     address public oracleAddress;
-
-    // @notice Address of the leaderboard contract
-    address public leaderboardAddress;
 
     // @notice Prompt used for generating the NFTs
     string public prompt;
@@ -105,14 +101,6 @@ contract Aether is ERC721, ERC721Enumerable, ERC721URIStorage {
             fullPrompt
         );
         emit MintInputCreated(msg.sender, currentId);
-
-        ILeaderboard leaderboardContract = ILeaderboard(leaderboardAddress);
-
-        uint256 newScore = leaderboardContract.getUserScore(userAddress) + 1;
-        leaderboardContract.updateUserScore(userAddress, newScore);
-
-        emit LeaderboardUpdated(leaderboardAddress, newScore);
-
 
         return currentId;
     }
