@@ -22,8 +22,7 @@ Aethereal is a platform that allows users to create unique NFT art using AI. Use
 ### Prerequisites
 
 - Node.js (v14 or later)
-- npm or yarn
-
+- pnpm
 ### Installation
 
 1. Clone the repository:

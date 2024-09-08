@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@envio-dev/hypersync-client": "^0.6.2",
     "axios": "^1.7.7",
     "ethers": "^6.13.2",
     "ethers6": "link:thirdweb/adapters/ethers6",

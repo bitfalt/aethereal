@@ -1,7 +1,20 @@
-import React from 'react';
+"use client";
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import localFont from 'next/font/local';
 import { Navbar } from '@/components/Navbar';
+import { client } from "@/app/client";
+import { totalSupply } from "thirdweb/extensions/erc721";
+import { readContract } from "thirdweb";
+import { defineChain, getContract } from "thirdweb";
+
+const galadrielDevnet = defineChain(696969);
+const aether = getContract({
+  address: "0x90D0cf5780F502B3DAc6C1e06Afc2D2575c77f5A",
+  chain: galadrielDevnet,
+  client
+});
 
 // Define the font
 const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
@@ -13,18 +26,58 @@ interface NFT {
   creator: string;
 }
 
-// This would typically come from an API or database
-const recentNFTs: NFT[] = [
-  { id: '1', name: 'Cosmic Voyage', imageUrl: '/placeholder.png', creator: 'Artist1' },
-  { id: '2', name: 'Digital Dreams', imageUrl: '/placeholder.png', creator: 'Artist2' },
-  { id: '3', name: 'Neon Nights', imageUrl: '/placeholder.png', creator: 'Artist3' },
-  { id: '4', name: 'Ethereal Echoes', imageUrl: '/placeholder.png', creator: 'Artist4' },
-  { id: '5', name: 'Quantum Quill', imageUrl: '/placeholder.png', creator: 'Artist5' },
-  { id: '6', name: 'Stellar Synthesis', imageUrl: '/placeholder.png', creator: 'Artist6' },
-  // Add more NFTs as needed
-];
+const getFeaturedNfts = async () => {
+  try {
+    const supply = await totalSupply({contract: aether});
+    console.log("Supply: ");
+    console.log(supply);
+    let indexedNfts = [];
+    for (let i = Number(supply) - 1; i >= 0 ; i--) {
+      if (indexedNfts.length >= 12) break
+
+      const input = await readContract({
+        contract: aether,
+        method: "function mintInputs(uint256 tokenId) returns (address, string, bool)",
+        params: [i]
+      })
+
+      const creator = input[0];      
+
+      const tokenUri = await readContract({
+        contract: aether,
+        method: "function tokenURI(uint256 tokenId) returns (string)",
+        params: [i]
+      });
+      if (tokenUri) {
+        indexedNfts.push({ id: i, name: `Aether #${i}`, imageUrl: tokenUri, creator: creator });
+      }
+    }
+    return indexedNfts;
+  } catch (error) {
+    console.error("Error getting featured NFTs:", error);
+  }
+};
+
 
 export default function FeaturedPage() {
+  const [recentNFTs, setRecentNFTs] = useState([]);
+
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      try {
+        const featuredNfts = await getFeaturedNfts();
+        if (featuredNfts) {
+          //@ts-ignore
+          setRecentNFTs(featuredNfts);
+          console.log("Featured NFTs:");
+          console.log(featuredNfts);
+        }
+      } catch (error) {
+        console.error("Error fetching featured NFTs:", error);
+      }
+    };
+    fetchNFTs();
+  }, []);
   return (
     <div className={`${etna.className} bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] min-h-screen relative overflow-hidden`}>
       <div className="absolute inset-0 bg-[url('/stars.png')] opacity-70"></div>
@@ -59,12 +112,6 @@ export default function FeaturedPage() {
                 </div>
               </div>
             ))}
-          </div>
-
-          <div className="mt-16 text-center">
-            <button className="px-8 py-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors duration-300 shadow-md hover:shadow-lg text-lg font-semibold">
-              Load More
-            </button>
           </div>
         </div>
       </div>

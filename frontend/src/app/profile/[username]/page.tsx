@@ -100,7 +100,7 @@ const ProfilePage = () => {
         if (userNfts && userNfts.length > 0) {
           const nftsData = userNfts.map((nft, index) => ({
             id: index,
-            name: `Aether ${nft.tokenId}`,
+            name: `Aether #${nft.tokenId}`,
             image: nft.tokenUri,
             description: `${nft.prompt}`,
             artist: `AI used by ${nft.creator}`

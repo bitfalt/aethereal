@@ -166,7 +166,8 @@ export default function CreatePage() {
 
     try {
       await mintNft();
-      //updateLeaderboard();
+      await new Promise(resolve => setTimeout(resolve, 8000));
+      await updateLeaderboard();
       // You might want to show a success message or redirect the user here
     } catch (err) {
       console.error(err);
