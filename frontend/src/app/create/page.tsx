@@ -23,7 +23,7 @@ export default function CreatePage() {
 
   const galadrielDevnet = defineChain(696969);
   const leaderboard = getContract({
-    address: "0xbbA6B081A01A587574Aea611dFD6e11442e25fa1",
+    address: "0x2a10de5b190445aA20a3b44cDE936b65025Eadbf",
     chain: galadrielDevnet,
     client
   })
