@@ -20,7 +20,7 @@ const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
 // Update mockUser to remove username
 const mockUser = {
   name: 'Alvaro Lazarus',
-  avatar: '/avatar.jpg',
+  avatar: '/avatar.png',
   bio: 'NFT enthusiast and digital art collector',
 };
 
