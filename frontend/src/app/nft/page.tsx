@@ -3,13 +3,9 @@
 import { useState, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { client } from "../client";
-import { defineChain, getContract, readContract, prepareContractCall, sendAndConfirmTransaction, sendTransaction, waitForReceipt, getContractEvents } from "thirdweb";
-import { useActiveAccount, useSendTransaction, useReadContract } from "thirdweb/react";
+import { defineChain, getContract, readContract, prepareContractCall, sendTransaction, waitForReceipt, getContractEvents } from "thirdweb";
+import { useActiveAccount } from "thirdweb/react";
 import { tokenOfOwnerByIndex } from "thirdweb/extensions/erc721";
-import { ethers6Adapter } from "thirdweb/adapters/ethers6";
-import { Contract } from "ethers";
-import { LEADERBOARD_ABI, LEADERBOARD_BYTECODE } from "@/types/network";
-
 
 export default function Home() {
   const [url, setUrl] = useState("");
