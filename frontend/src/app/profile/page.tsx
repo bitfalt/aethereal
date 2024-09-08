@@ -89,12 +89,4 @@ const ProfilePage = () => {
   );
 };
 
-const WrappedProfilePage = () => {
-  return (
-    <ThirdwebProvider activeChain="ethereum">
-      <ProfilePage />
-    </ThirdwebProvider>
-  );
-};
-
 export default ProfilePage;
