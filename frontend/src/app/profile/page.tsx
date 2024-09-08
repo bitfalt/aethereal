@@ -7,29 +7,64 @@ import Link from 'next/link';
 import avatarImage from '/public/avatar.jpg';
 import localFont from 'next/font/local';
 import { useActiveAccount } from "thirdweb/react";
-import { Navbar } from '@/components/Navbar'; 
+import { Navbar } from '@/components/Navbar';
+import { useState } from 'react';
+import NFTPreviewModal from '@/components/NFTPreviewModal';
+import EditProfileModal from '@/components/EditProfileModal'; 
 
 // Define the font
 const etna = localFont({ src: '../../../public/fonts/Etna-Sans-serif.otf' });
 
-// Mock data for user (replace this with actual user data fetching logic)
+// Update mockUser to remove username
 const mockUser = {
   name: 'Alvaro Lazarus',
-  username: '@lazarus',
   avatar: '/avatar.jpg',
   bio: 'NFT enthusiast and digital art collector',
 };
 
-// Mock data for NFTs (replace this with actual data fetching logic)
+// Update mockNFTs to include description and artist
 const mockNFTs = [
-  { id: 1, name: 'NFT 1', image: '/placeholder.jpg' },
-  { id: 2, name: 'NFT 2', image: '/placeholder.jpg' },
-  { id: 3, name: 'NFT 3', image: '/placeholder.jpg' },
+  { id: 1, name: 'NFT 1', image: '/placeholder.jpg', description: 'Description 1', artist: 'Artist 1' },
+  { id: 2, name: 'NFT 2', image: '/placeholder.jpg', description: 'Description 2', artist: 'Artist 2' },
+  { id: 3, name: 'NFT 3', image: '/placeholder.jpg', description: 'Description 3', artist: 'Artist 3' },
 ];
+
+// Add this type definition near the top of your file, after the imports
+type NFT = {
+  id: number;
+  name: string;
+  image: string;
+  description: string;
+  artist: string;
+};
 
 const ProfilePage = () => {
   const account = useActiveAccount();
   const address = account?.address;
+  const [selectedNFT, setSelectedNFT] = useState<NFT | null>(null);
+  const [user, setUser] = useState(mockUser);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  const openModal = (nft: NFT) => {
+    setSelectedNFT(nft);
+  };
+
+  const closeModal = () => {
+    setSelectedNFT(null);
+  };
+
+  const openEditModal = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const updateUserProfile = (updatedUser: typeof mockUser) => {
+    setUser(updatedUser);
+    closeEditModal();
+  };
 
   return (
     <div className={`${etna.className} bg-gradient-to-b from-[#0f172a] to-[#1e1b4b] min-h-screen relative overflow-hidden`}>
@@ -37,29 +72,38 @@ const ProfilePage = () => {
       <div className="relative z-10">
         <Navbar />  {/* Use the imported Navbar component */}
         <div className="container mx-auto px-4 py-12 max-w-5xl">
-          <section className="mb-12 bg-indigo-900/50 backdrop-blur-sm rounded-xl border border-indigo-700 p-8 shadow-lg">
-            <div className="flex flex-col md:flex-row items-center md:items-start justify-between">
-              <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8 mb-6 md:mb-0">
-                <Image 
-                  src={avatarImage} 
-                  alt="Profile Avatar" 
-                  width={150} 
-                  height={150} 
-                  className="rounded-full border-4 border-indigo-500 shadow-lg" 
-                />
+          <section className="mb-12 bg-indigo-900/50 backdrop-blur-sm rounded-xl border border-indigo-700 p-8 shadow-lg overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between">
+              <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 mb-6 md:mb-0">
+                <div className="relative">
+                  <Image 
+                    src={user.avatar} 
+                    alt="Profile Avatar" 
+                    width={150} 
+                    height={150} 
+                    className="rounded-full border-4 border-indigo-500 shadow-lg" 
+                  />
+                </div>
                 <div className="text-center md:text-left">
-                  <h1 className="text-4xl font-bold text-white mb-2">{mockUser.name}</h1>
-                  <p className="text-xl text-indigo-300 mb-4">{mockUser.username}</p>
-                  <p className="text-lg text-indigo-100">{mockUser.bio}</p>
+                  <h1 className="text-4xl font-bold text-white mb-4">{user.name}</h1>
+                  <div className="w-24 h-px bg-indigo-400 mx-auto md:mx-0 mb-4"></div>
+                  <p className="text-lg text-indigo-100 max-w-md">{user.bio}</p>
                 </div>
               </div>
-              <div className="mt-6 md:mt-0">
-                <div className={`px-4 py-2 rounded-full ${address ? 'bg-green-500/20 text-green-300 border border-green-500' : 'bg-red-500/20 text-red-300 border border-red-500'} backdrop-blur-sm`}>
+              <div className="flex flex-col items-end space-y-4">
+                <div className={`inline-block px-4 py-2 rounded-full ${address ? 'bg-green-500/20 text-green-300 border border-green-500' : 'bg-red-500/20 text-red-300 border border-red-500'} backdrop-blur-sm`}>
                   <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${address ? 'bg-green-400' : 'bg-red-400'}`}></div>
                     <span>{address ? 'Wallet Connected' : 'Wallet Disconnected'}</span>
                   </div>
                 </div>
+                <button
+                  onClick={openEditModal}
+                  className="px-6 py-3 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors duration-300 shadow-md hover:shadow-lg"
+                >
+                  Edit Profile
+                </button>
               </div>
             </div>
           </section>
@@ -68,7 +112,11 @@ const ProfilePage = () => {
             <h2 className="text-3xl font-semibold mb-6 text-white">Your Generated NFTs</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {mockNFTs.map((nft) => (
-                <div key={nft.id} className="bg-indigo-900/50 backdrop-blur-sm border border-indigo-700 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105 shadow-md">
+                <div 
+                  key={nft.id} 
+                  className="bg-indigo-900/50 backdrop-blur-sm border border-indigo-700 rounded-xl overflow-hidden transition-transform duration-300 hover:scale-105 shadow-md cursor-pointer"
+                  onClick={() => openModal(nft)}
+                >
                   <div className="aspect-square">
                     <Image src={nft.image} alt={nft.name} width={300} height={300} className="w-full h-full object-cover" />
                   </div>
@@ -85,6 +133,12 @@ const ProfilePage = () => {
           </section>
         </div>
       </div>
+      {selectedNFT && (
+        <NFTPreviewModal nft={selectedNFT} onClose={closeModal} />
+      )}
+      {isEditModalOpen && (
+        <EditProfileModal user={user} onClose={closeEditModal} onSave={updateUserProfile} />
+      )}
     </div>
   );
 };
