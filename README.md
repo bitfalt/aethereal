@@ -56,10 +56,9 @@ Aethereal is a platform that allows users to create unique NFT art using AI. Use
 
 `frontend` Contains the whole application, inside the frontend folder there is a `thirdweb-contracts` folder that contains the smart contracts for the platform.
 
+## Faucet
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+To get more information regarding wallet connection and faucet, please refer to the [Galadriel documentation](https://docs.galadriel.com/setting-up-a-wallet).
 
 ## License
 
